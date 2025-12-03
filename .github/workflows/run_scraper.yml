@@ -1,0 +1,39 @@
+name: Run Scraper and Save JSON
+
+on:
+  workflow_dispatch: # run manually
+  schedule:
+    - cron: "0 */8 * * *" # run every 8 hours (change if needed)
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install requests beautifulsoup4
+
+      - name: Run scraper
+        run: |
+          python scraper.py
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "Vaibhav Samdani"
+          git config --global user.email "Vaibhavmaheshwari517@gmail.com"
+
+          git add new/poems/*.json || echo "No new files"
+          git diff --cached --quiet && echo "No changes to commit" || git commit -m "Scraped new poem data"
+          git push || echo "Nothing to push"
