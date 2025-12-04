@@ -4,10 +4,20 @@ import time
 import random
 import requests
 from bs4 import BeautifulSoup
+import json
+
+# -------------------------------------------------
+#@Vaibhav-Samdani
 
 BASE_URL = "https://kavitakosh.org"
 INDEX_URL = BASE_URL + "/kk/रचनाकारों_की_सूची"
-SAVE_DIR = "new/poets"
+
+START = 121;
+END = 124;
+
+SAVE_DIR = f"poets/{START}-{END}"
+
+#-------------------------------------------------
 
 os.makedirs(SAVE_DIR, exist_ok=True)
 
@@ -61,7 +71,7 @@ def is_navigation_text(text: str) -> bool:
 # Step 1: Get first x poets from रचनाकारों_की_सूची
 # -------------------------------------------------
 
-def get_poet_list(limit: int = 50):
+def scrape_poet_list(limit: int = 4):
     print("Scraping poets index page...")
     soup = get_soup(INDEX_URL)
 
@@ -224,7 +234,7 @@ def scrape_work(poet_name: str, work_title: str, work_url: str):
 # Step 4: Scrape one poet → save JSON
 # -------------------------------------------------
 
-def scrape_poet(poet_name: str, poet_url: str):
+def scrape_poet(poet_name: str, poet_url: str, start: int, end: int):
     works_meta = get_poet_works(poet_name, poet_url)
 
     poet_data = {
@@ -245,15 +255,46 @@ def scrape_poet(poet_name: str, poet_url: str):
     print(f"  Saved: {out_path}\n")
 
 
+
+
+
+
+def get_poet_list(file_path, start=0, end=None):
+    """
+    Load JSON data from a file and return a sliced portion.
+    
+    Params:
+        file_path (str): Path to the JSON file.
+        start (int): Starting index of slice.
+        end (int or None): Ending index (exclusive). None returns full list from start.
+        
+    Returns:
+        list: Sliced array of JSON items.
+    """
+    
+    # Open and read file
+    with open(file_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    # Ensure the data is a list
+    if not isinstance(data, list):
+        raise TypeError("JSON file must contain an array/list at the top level.")
+
+    # Slice the list
+    return data[start-1:end]
+
 # -------------------------------------------------
 # Main
 # -------------------------------------------------
 
 def main():
-    poets = get_poet_list(limit=3140)  # get all poets
+    
+    poets = get_poet_list("./poets.json", start=START, end=END)  # get all poets
+    
+    # print(f"{poets}\n")
 
-    for poet_name, poet_url in poets:
-        scrape_poet(poet_name, poet_url)
+    for poet in poets:
+        scrape_poet(poet["poet_name"], poet["poet_url"],start=START, end=END)
         sleep_polite()
 
     print("All poets scraped and saved.")
